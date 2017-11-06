@@ -75,17 +75,21 @@ class BankIDService
      * @return OrderResponse
      * @throws \SoapFault
      */
-    public function getSignResponse($personalNumber, $userVisibleData)
+    public function getSignResponse($personalNumber, $userVisibleData, $userHiddenData = null)
     {
         $userVisibleData = base64_encode($userVisibleData);
         $parameters = [
-            'parameters' => [
-                'personalNumber' => $personalNumber,
-                'userVisibleData' => $userVisibleData,
-            ],
+            'personalNumber' => $personalNumber,
+            'userVisibleData' => $userVisibleData,
         ];
 
-        $response = $this->client->__soapCall(self::METHOD_SIGN, $parameters);
+        if(!empty($userHiddenData)) {
+	         $parameters['userNonVisibleData'] = $userHiddenData;
+        }
+
+        $options = ['parameters' => $parameters];
+
+        $response = $this->client->__soapCall(self::METHOD_SIGN, $options);
 
         $orderResponse = new OrderResponse();
         $orderResponse->orderRef = $response->orderRef;
@@ -102,12 +106,12 @@ class BankIDService
     public function getAuthResponse($personalNumber = null)
     {
         $parameters = [
-            'parameters' => [
-                'personalNumber' => $personalNumber,
-            ],
+            'personalNumber' => $personalNumber,
         ];
 
-        $response = $this->client->__soapCall(self::METHOD_AUTH, $parameters);
+        $options = ['parameters' => $parameters];
+
+        $response = $this->client->__soapCall(self::METHOD_AUTH, $options);
 
         $orderResponse = new OrderResponse();
         $orderResponse->orderRef = $response->orderRef;

@@ -1,9 +1,9 @@
 <?php
 
-namespace Dimafe6\BankID\Service;
+namespace Puggan\BankID\Service;
 
-use Dimafe6\BankID\Model\CollectResponse;
-use Dimafe6\BankID\Model\OrderResponse;
+use Puggan\BankID\Model\CollectResponse;
+use Puggan\BankID\Model\OrderResponse;
 use PHPUnit\Framework\TestCase;
 
 class BankIDServiceTest extends TestCase

@@ -1,10 +1,10 @@
 <?php
 
-namespace Dimafe6\BankID\Service;
+namespace Puggan\BankID\Service;
 
 use SoapClient;
-use Dimafe6\BankID\Model\OrderResponse;
-use Dimafe6\BankID\Model\CollectResponse;
+use Puggan\BankID\Model\OrderResponse;
+use Puggan\BankID\Model\CollectResponse;
 
 /**
  * Class BankIDService.

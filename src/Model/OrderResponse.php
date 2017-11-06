@@ -1,6 +1,6 @@
 <?php
 
-namespace Dimafe6\BankID\Model;
+namespace Puggan\BankID\Model;
 
 class OrderResponse
 {

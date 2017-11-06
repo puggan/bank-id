@@ -84,6 +84,7 @@ class BankIDService
         ];
 
         if(!empty($userHiddenData)) {
+	         $userHiddenData = base64_encode($userHiddenData);
 	         $parameters['userNonVisibleData'] = $userHiddenData;
         }
 

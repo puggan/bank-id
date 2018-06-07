@@ -27,10 +27,19 @@
 		const PROGRESS_ERROR_CANCELLED = 'CANCELLED';
 		const PROGRESS_ERROR_START_FAILED = 'START_FAILED';
 
+		const STATUS_V5_PENDING = 'pending';
+		const STATUS_V5_FAILED = 'failed';
+		const STATUS_V5_COMPLETED = 'complete';
+
 		/**
 		 * @var string
 		 */
 		public $progressStatus;
+
+		/**
+		 * @var string
+		 */
+		public $status;
 
 		/**
 		 * String (b64). XML-signature. (If the order is COMPLETE). The content of the

@@ -18,18 +18,34 @@
 		 */
 		private $personalNumber;
 
+		private $ip;
+
+		/**
+		 * Set up the test
+		 * @throws \Exception
+		 * @return void
+		 */
 		public function setUp()
 		{
+			$this->ip = file_get_contents('https://bot.whatismyipaddress.com/');
+
 			$this->bankIDService = new BankIDService(
-				'https://appapi2.test.bankid.com/rp/v4?wsdl', ['local_cert' => __DIR__ . '/../bankId.pem'], FALSE
+				'https://appapi2.test.bankid.com/rp/v5', $this->ip, [
+					'cafile' => __DIR__ . '/../testCa.pem',
+					'local_cert' => __DIR__ . '/../bankId.pem',
+				]
 			);
 			$this->personalNumber = getenv('personalNumber');
 			if(empty($this->personalNumber))
 			{
-				$this->fail("Need set personalNumber variable in phpunit.xml");
+				$this->fail("Need set personalNumber variable in phpunit.xml or as ENV");
 			}
 		}
 
+		/**
+		 * Make sure the setup worked
+		 * @return void
+		 */
 		public function testConstructor()
 		{
 			$this->assertTrue($this->bankIDService instanceof BankIDService);
@@ -37,8 +53,12 @@
 		}
 
 		/**
+		 * Test signing
+		 *
 		 * @depends testConstructor
+		 *
 		 * @return OrderResponse
+		 * @throws \SoapFault
 		 */
 		public function testSignResponse()
 		{
@@ -49,11 +69,14 @@
 		}
 
 		/**
+		 * Test signing response
+		 *
 		 * @depends testSignResponse
 		 *
 		 * @param $signResponse
 		 *
 		 * @return CollectResponse
+		 * @throws \SoapFault
 		 */
 		public function testCollectSignResponse($signResponse)
 		{
@@ -65,7 +88,7 @@
 
 			do
 			{
-				fwrite(STDOUT, "Waiting 5sec for confirmation from BankID mobile application...\n");
+				fwrite(STDOUT, "Waiting 5sec for confirmation (sign) from BankID mobile application...\n");
 				sleep(5);
 				$collectResponse = $this->bankIDService->collectResponse($signResponse->orderRef);
 				$this->assertTrue($collectResponse instanceof CollectResponse);
@@ -75,13 +98,21 @@
 				}
 				$attemps++;
 			}
-			while($collectResponse->progressStatus !== CollectResponse::PROGRESS_STATUS_COMPLETE && $attemps <= 12);
+			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attemps <= 12);
 
-			$this->assertEquals(CollectResponse::PROGRESS_STATUS_COMPLETE, $collectResponse->progressStatus);
+			$this->assertEquals(CollectResponse::STATUS_V5_COMPLETED, $collectResponse->status);
 
 			return $collectResponse;
 		}
 
+		/**
+		 * Test auth
+		 *
+		 * @depends testConstructor
+		 *
+		 * @return OrderResponse
+		 * @throws \SoapFault
+		 */
 		public function testAuthResponse()
 		{
 			$authResponse = $this->bankIDService->getAuthResponse($this->personalNumber);
@@ -91,11 +122,14 @@
 		}
 
 		/**
+		 * Test auth response
+		 *
 		 * @depends testAuthResponse
 		 *
 		 * @param $authResponse
 		 *
 		 * @return CollectResponse
+		 * @throws \SoapFault
 		 */
 		public function testAuthSignResponse($authResponse)
 		{
@@ -107,7 +141,7 @@
 
 			do
 			{
-				fwrite(STDOUT, "Waiting 5sec for confirmation from BankID mobile application...\n");
+				fwrite(STDOUT, "Waiting 5sec for confirmation (auth) from BankID mobile application...\n");
 				sleep(5);
 				$collectResponse = $this->bankIDService->collectResponse($authResponse->orderRef);
 				$this->assertTrue($collectResponse instanceof CollectResponse);
@@ -117,9 +151,9 @@
 				}
 				$attemps++;
 			}
-			while($collectResponse->progressStatus !== CollectResponse::PROGRESS_STATUS_COMPLETE && $attemps <= 12);
+			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attemps <= 12);
 
-			$this->assertEquals(CollectResponse::PROGRESS_STATUS_COMPLETE, $collectResponse->progressStatus);
+			$this->assertEquals(CollectResponse::STATUS_V5_COMPLETED, $collectResponse->status);
 
 			return $collectResponse;
 		}

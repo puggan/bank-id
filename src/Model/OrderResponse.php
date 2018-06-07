@@ -1,16 +1,16 @@
 <?php
 
-namespace Puggan\BankID\Model;
+	namespace Puggan\BankID\Model;
 
-class OrderResponse
-{
-    /**
-     * @var string
-     */
-    public $orderRef;
+	class OrderResponse
+	{
+		/**
+		 * @var string
+		 */
+		public $orderRef;
 
-    /**
-     * @var string
-     */
-    public $autoStartToken;
-}
+		/**
+		 * @var string
+		 */
+		public $autoStartToken;
+	}

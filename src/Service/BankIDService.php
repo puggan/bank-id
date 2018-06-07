@@ -15,19 +15,24 @@ use Puggan\BankID\Model\CollectResponse;
 class BankIDService
 {
     /**
-     * Bank ID Sign method name.
+     * @var string Bank ID Sign method name.
      */
     const METHOD_SIGN = 'Sign';
 
     /**
-     * Bank ID Authenticate method name.
+     * @var string Bank ID Authenticate method name.
      */
     const METHOD_AUTH = 'Authenticate';
 
     /**
-     * Bank ID Collect method name.
+     * @var string Bank ID Collect method name.
      */
     const METHOD_COLLECT = 'Collect';
+
+    /**
+     * @var string Bank ID cancel method name
+     */
+    const METHOD_CANCEL = 'Cancel';
 
     /**
      * @var SoapClient
@@ -140,5 +145,17 @@ class BankIDService
         }
 
         return $collect;
+    }
+
+	/**
+	 * @param string $orderRef
+	 *
+	 * @throws \Exception
+	 */
+    public function cancelResponse($orderRef)
+    {
+	    /// TODO: this function require version 5 of bankid api
+	    throw new \Exception('Requires v5 of BankID api');
+	    // return $this->client->__soapCall(self::METHOD_CANCEL, ['orderRef' => $orderRef]);
     }
 }

@@ -267,7 +267,6 @@
 			$raw_response = curl_exec($c);
 			$error = curl_error($c);
 			curl_close($c);
-			print_r([$raw_response, json_decode($raw_response), $error, $url, $data]);
 
 			if($error)
 			{

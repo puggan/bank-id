@@ -66,7 +66,7 @@
 		{
 			$this->url = $url;
 			$this->ip = $ip;
-			$this->options = $options;
+			$this->options = (array) $options;
 
 			if(preg_match("@/v([0-9])+([?/]|$)@", $this->url, $m))
 			{
@@ -242,9 +242,9 @@
 			if(isset($this->options['stream_context']) AND is_resource($this->options['stream_context']))
 			{
 				$stream_context = stream_context_get_params($this->options['stream_context']);
-				if(isset($stream_context['option']['ssl']))
+				if(isset($stream_context['options']['ssl']))
 				{
-					$this->options += $stream_context['option']['ssl'];
+					$this->options += $stream_context['options']['ssl'];
 				}
 			}
 			if(isset($this->options['cafile']))

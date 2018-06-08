@@ -31,6 +31,18 @@
 		const STATUS_V5_FAILED = 'failed';
 		const STATUS_V5_COMPLETED = 'complete';
 
+		const HINT_PENDING_OUTSTANDING_TRANSACTION = 'outstandingTransaction';
+		const HINT_PENDING_NO_CLIENT = 'noClient';
+		const HINT_PENDING_STARTED = 'started';
+		const HINT_PENDING_USER_SIGN = 'userSign';
+
+		const HINT_FAILED_EXPIRED_TRANSACTION = 'expiredTransaction';
+		const HINT_FAILED_CERTIFICATE_ERR = 'certificateErr';
+		const HINT_FAILED_USER_CANCEL = 'userCancel';
+		const HINT_FAILED_CANCELLED = 'cancelled';
+		const HINT_FAILED_START_FAILED = 'startFailed';
+		const HINT_FAILED_ALREADY_IN_PROGRESS = 'alreadyInProgress';
+
 		/**
 		 * @var string
 		 */

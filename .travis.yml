@@ -14,6 +14,7 @@ php:
 sudo: false
 
 install:
+  - rm composer.lock
   - composer install
 
 script:

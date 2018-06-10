@@ -3,20 +3,20 @@ Bank-ID
 
 Library for connect Swedish BankID to your application.
 
-[![Latest Stable Version](https://poser.pugx.org/puggan/bank-id/v/stable)](https://packagist.org/packages/puggan/bank-id)
-[![Latest Unstable Version](https://poser.pugx.org/puggan/bank-id/v/unstable)](https://packagist.org/packages/puggan/bank-id)
-[![Total Downloads](https://poser.pugx.org/puggan/bank-id/downloads)](https://packagist.org/packages/puggan/bank-id)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE.md)
 [![Build Status](https://travis-ci.org/puggan/bank-id.svg?branch=dev)](https://travis-ci.org/puggan/bank-id)
 
 ## Requirements
 
-* PHP 5.6+ or 7.0+
-* [soap-client](http://php.net/manual/ru/class.soapclient.php)
+* PHP 5.5+ (tested from 5.5 to 7.3-dev)
+* [curl](http://php.net/manual/en/book.curl.php)
 
 ## Install
 
 Via Composer
+
+Not an offical package, so add repo:
+https://github.com/SpiroAB/composer-repo
 
 ``` bash
 $ composer require puggan/bank-id
@@ -26,20 +26,27 @@ $ composer require puggan/bank-id
 
 ```php
 <?php
-// Create BankIDService
+use Puggan\BankID\Service\BankIDService;
+use Puggan\BankID\Model\CollectResponse;
+
+// Create BankIDService (for test server)
 $bankIDService = new BankIDService(
-    'https://appapi2.test.bankid.com/rp/v4?wsdl',
-    ['local_cert' => 'PATH_TO_TEST_CERT.pem'],
-    false
+    'https://appapi2.test.bankid.com/rp/v5',
+    $_SERVER['REMOTE_ADDR'],
+    [
+        'cafile' => 'PATH_TO_CAFILE.pem',
+        'local_cert' => 'PATH_TO_TEST_CERT.pem',
+        // 'local_pk' => '', // if key not included in cert file
+    ]
 );
 
 // Signing. Step 1 - Get orderRef
 $response = $bankIDService->getSignResponse('PERSONAL_NUMBER', 'Test user data');
 
 // Signing. Step 2 - Collect orderRef. 
-// Repeat until $collectResponse->progressStatus == CollectResponse::PROGRESS_STATUS_COMPLETE
+// Repeat until $collectResponse->status == CollectResponse::STATUS_V5_COMPLETED
 $collectResponse = $bankIDService->collectResponse($response->orderRef);
-if($collectResponse->progressStatus == CollectResponse::PROGRESS_STATUS_COMPLETE) {
+if($collectResponse->status === CollectResponse::STATUS_V5_COMPLETED) {
     return true; //Signed successfully
 }
 
@@ -49,27 +56,14 @@ $response = $bankIDService->getAuthResponse('PERSONAL_NUMBER');
 // Authorize. Step 2 - Collect orderRef. 
 // Repeat until $authResponse->progressStatus == CollectResponse::PROGRESS_STATUS_COMPLETE
 $authResponse = $bankIDService->collectResponse($response->orderRef);
-if($authResponse->progressStatus == CollectResponse::PROGRESS_STATUS_COMPLETE) {
-    return true; //Authorized
+if($collectResponse->status === CollectResponse::STATUS_V5_COMPLETED) {
+    return true; //Signed successfully
 }
 ```
 
 ## Testing
 
-1. Copy phpunit.xml.dist to phpunit.xml
-``` bash
-$ cp phpunit.xml.dist phpunit.xml
-```
-
-2. Create and add test personal number to mobile app. [Demo BankID site](https://demo.bankid.com)
-
-3. Set personal number in phpunit.xml:
-
-``` xml
-<env name="personalNumber" value=""/>
-```
-
-4. Execute
+1. Execute
 
 ``` bash
 $ ./vendor/bin/phpunit

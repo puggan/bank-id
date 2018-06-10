@@ -1,10 +1,11 @@
 <?php
 
-	namespace Puggan\BankID\Service;
+	namespace Tests\Puggan\BankID\Service;
 
 	use Puggan\BankID\Exception;
 	use Puggan\BankID\Model\CollectResponse;
 	use Puggan\BankID\Model\OrderResponse;
+	use Puggan\BankID\Service\BankIDService;
 	use PHPUnit\Framework\TestCase;
 
 	/**

@@ -2,15 +2,28 @@
 
 	namespace Puggan\BankID\Model;
 
+	/**
+	 * Class OrderResponse
+	 * @package Puggan\BankID\Model
+	 *
+	 * @property string orderRef
+	 * @property string autoStartToken
+	 */
 	class OrderResponse
 	{
-		/**
-		 * @var string
-		 */
 		public $orderRef;
+		public $autoStartToken;
 
 		/**
-		 * @var string
+		 * OrderResponse constructor.
+		 *
+		 * @param mixed[] $data
 		 */
-		public $autoStartToken;
+		public function __construct(array $data = [])
+		{
+			foreach($data as $key => $value)
+			{
+				$this->$key = $value;
+			}
+		}
 	}

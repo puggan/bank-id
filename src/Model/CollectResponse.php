@@ -5,37 +5,37 @@
 	/**
 	 * Class CollectResponse.
 	 *
-	 * @category PHP
-	 * @author   Dmytro Feshchenko <dimafe2000@gmail.com>
+	 * @property string status any of the 3 STATUS_V5_*
+	 * @property string hint any of the HINT_*
+	 * @property string progressStatus (deprecated) same as hint, for backwards compatibility
+	 * @property string signature Base64 encoded string.
+	 *     XML-signature. (If the order is COMPLETE).
+	 *     The content of the signature is described in BankID Signature Profile specification.
+	 * @property string userInfo UserInfoType (If the order is COMPLETE)
+	 * @property string ocspResponse Base64 encoded string.
+	 *     OCSP-response (If the order is COMPLETE).
+	 *     The OCSP response is signed by a certificate that has the same issuer as the certificate being verified.
+	 *     The OCSP response has an extension for Nonce.
+	 *     The nonce is calculated as: SHA-1 hash over the base 64 XML signature encoded as UTF-8.
+	 *     12 random bytes is added after the hash The nonce is 32 bytes (20 + 12).
 	 */
 	class CollectResponse
 	{
-		const PROGRESS_STATUS_OUTSTANDING_TRANSACTION = 'OUTSTANDING_TRANSACTION';
-		const PROGRESS_STATUS_NO_CLIENT = 'NO_CLIENT';
-		const PROGRESS_STATUS_STARTED = 'STARTED';
-		const PROGRESS_STATUS_USER_SIGN = 'USER_SIGN';
-		const PROGRESS_STATUS_USER_REQ = 'USER_REQ';
-		const PROGRESS_STATUS_COMPLETE = 'COMPLETE';
-
-		const PROGRESS_ERROR_ALREADY_IN_PROGRESS = 'ALREADY_IN_PROGRESS';
-		const PROGRESS_ERROR_INTERNAL_ERROR = 'INTERNAL_ERROR';
-		const PROGRESS_ERROR_RETRY = 'RETRY';
-		const PROGRESS_ERROR_CLIENT_ERR = 'CLIENT_ERR';
-		const PROGRESS_ERROR_EXPIRED_TRANSACTION = 'EXPIRED_TRANSACTION';
-		const PROGRESS_ERROR_CERTIFICATE_ERR = 'CERTIFICATE_ERR';
-		const PROGRESS_ERROR_USER_CANCEL = 'USER_CANCEL';
-		const PROGRESS_ERROR_CANCELLED = 'CANCELLED';
-		const PROGRESS_ERROR_START_FAILED = 'START_FAILED';
-
+		/* Possible statuses */
+		const STATUS_V5_COMPLETED = 'complete';
 		const STATUS_V5_PENDING = 'pending';
 		const STATUS_V5_FAILED = 'failed';
-		const STATUS_V5_COMPLETED = 'complete';
 
+		/* Possible hint on status complete */
+		const HINT_COMPLETED = self::STATUS_V5_COMPLETED;
+
+		/* Possible hint on status pending */
 		const HINT_PENDING_OUTSTANDING_TRANSACTION = 'outstandingTransaction';
 		const HINT_PENDING_NO_CLIENT = 'noClient';
 		const HINT_PENDING_STARTED = 'started';
 		const HINT_PENDING_USER_SIGN = 'userSign';
 
+		/* Possible hint on status failed */
 		const HINT_FAILED_EXPIRED_TRANSACTION = 'expiredTransaction';
 		const HINT_FAILED_CERTIFICATE_ERR = 'certificateErr';
 		const HINT_FAILED_USER_CANCEL = 'userCancel';
@@ -43,41 +43,27 @@
 		const HINT_FAILED_START_FAILED = 'startFailed';
 		const HINT_FAILED_ALREADY_IN_PROGRESS = 'alreadyInProgress';
 
+		public $status;
+		public $hint;
+		public $signature;
+		public $userInfo;
+		public $ocspResponse;
+
 		/**
-		 * @var string
+		 * @deprecated use $this->hint
 		 */
 		public $progressStatus;
 
 		/**
-		 * @var string
-		 */
-		public $status;
-
-		/**
-		 * String (b64). XML-signature. (If the order is COMPLETE). The content of the
-		 * signature is described in BankID Signature Profile specification.
+		 * CollectResponse constructor.
 		 *
-		 * @var string
+		 * @param mixed[] $data
 		 */
-		public $signature;
-
-		/**
-		 * UserInfoType (If the order is COMPLETE).
-		 *
-		 * @var string
-		 */
-		public $userInfo;
-
-		/**
-		 * String (b64). OCSP-response (If the order is COMPLETE). The OCSP response
-		 * is signed by a certificate that has the same issuer as the certificate
-		 * being verified. The OSCP response has an extension for Nonce.
-		 * The nonce is calculated as:
-		 * SHA-1 hash over the base 64 XML signature encoded as UTF-8.
-		 * 12 random bytes is added after the hash
-		 * The nonce is 32 bytes (20 + 12).
-		 *
-		 * @var string
-		 */
-		public $ocspResponse;
+		public function __construct(array $data = [])
+		{
+			foreach($data as $key => $value)
+			{
+				$this->$key = $value;
+			}
+		}
 	}

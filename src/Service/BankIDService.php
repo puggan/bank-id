@@ -2,109 +2,51 @@
 
 	namespace Puggan\BankID\Service;
 
-	use SoapClient;
+	use Puggan\BankID\Exception;
 	use Puggan\BankID\Model\OrderResponse;
 	use Puggan\BankID\Model\CollectResponse;
 
 	/**
 	 * Class BankIDService.
 	 *
-	 * @category PHP
-	 * @author   Dmytro Feshchenko <dimafe2000@gmail.com>
+	 * @property string url
+	 * @property string ip
+	 * @property mixed[] options
 	 */
 	class BankIDService
 	{
-		/**
-		 * @var string Bank ID Sign method name.
-		 */
-		const METHOD_SIGN = 'Sign';
-
-		/**
-		 * @var string Bank ID Authenticate method name.
-		 */
-		const METHOD_AUTH = 'Authenticate';
-
-		/**
-		 * @var string Bank ID Collect method name.
-		 */
-		const METHOD_COLLECT = 'Collect';
-
-		/**
-		 * @var string Bank ID cancel method name
-		 */
-		const METHOD_CANCEL = 'Cancel';
-
-		/**
-		 * @var SoapClient
-		 */
-		private $client;
-
-		/**
-		 * @var string
-		 */
 		private $url;
-
-		/**
-		 * @var mixed[]
-		 */
 		private $options;
-
-		private $version;
-
 		private $ip;
 
 		/**
 		 * BankIDService constructor.
 		 *
 		 * @param string $url Bank ID API url
-		 * @param array $options SoapClient options
-		 * @param bool $enableSsl Enable SSL
-		 *
-		 * @throws \Exception
+		 * @param string $ip IP of the user that initialized the request
+		 * @param array $options cafile, local_cert and local_pk
 		 */
 		public function __construct($url, $ip, array $options)
 		{
 			$this->url = $url;
 			$this->ip = $ip;
-			$this->options = (array) $options;
-
-			if(preg_match("@/v([0-9])+([?/]|$)@", $this->url, $m))
-			{
-				$this->version = (int) $m[1];
-			}
-			else
-			{
-				throw new \Exception('Unparsable version');
-			}
-
-			switch($this->version)
-			{
-				case 4:
-					$this->client = new SoapClient($this->url, $this->options);
-					break;
-				case 5:
-					$this->client = NULL;
-					break;
-				default:
-					throw new \Exception('unknown version');
-			}
+			$this->options = $options;
 		}
 
 		/**
-		 * @param $personalNumber
-		 * @param $userVisibleData
+		 * @param string $personalNumber Personal identification number
+		 * @param string $userVisibleData Text to show in the app
+		 * @param string $userHiddenData Text to sign but not to show in the app
 		 *
 		 * @return OrderResponse
-		 * @throws \SoapFault
-		 * @throws \Exception
+		 * @throws Exception
 		 */
-		public function getSignResponse($personalNumber, $userVisibleData, $userHiddenData = NULL)
+		public function getSignResponse($personalNumber, $userVisibleData, $userHiddenData = '')
 		{
-			$userVisibleData = base64_encode($userVisibleData);
 			$parameters = [
 				'personalNumber' => $personalNumber,
 				'endUserIp' => $this->ip,
-				'userVisibleData' => $userVisibleData,
+				'userVisibleData' => base64_encode($userVisibleData),
 				'requirement' => [
 					'allowFingerprint' => TRUE,
 				],
@@ -112,34 +54,19 @@
 
 			if(!empty($userHiddenData))
 			{
-				$userHiddenData = base64_encode($userHiddenData);
-				$parameters['userNonVisibleData'] = $userHiddenData;
+				$parameters['userNonVisibleData'] = base64_encode($userHiddenData);
 			}
 
-			$options = ['parameters' => $parameters];
+			$response = $this->post('sign', $parameters);
 
-			if($this->version === 4)
-			{
-				$response = $this->client->__soapCall(self::METHOD_SIGN, $options);
-			}
-			else
-			{
-				$response = $this->post('sign', $parameters);
-			}
-
-			$orderResponse = new OrderResponse();
-			$orderResponse->orderRef = $response->orderRef;
-			$orderResponse->autoStartToken = $response->autoStartToken;
-
-			return $orderResponse;
+			return new OrderResponse((array) $response);
 		}
 
 		/**
 		 * @param $personalNumber
 		 *
 		 * @return OrderResponse
-		 * @throws \SoapFault
-		 * @throws \Exception
+		 * @throws Exception
 		 */
 		public function getAuthResponse($personalNumber = NULL)
 		{
@@ -148,65 +75,38 @@
 				'endUserIp' => $this->ip,
 			];
 
-			$options = ['parameters' => $parameters];
+			$response = $this->post('auth', $parameters);
 
-			if($this->version === 4)
-			{
-				$response = $this->client->__soapCall(self::METHOD_AUTH, $options);
-			}
-			else
-			{
-				$response = $this->post('auth', $parameters);
-			}
-
-			$orderResponse = new OrderResponse();
-			$orderResponse->orderRef = $response->orderRef;
-			$orderResponse->autoStartToken = $response->autoStartToken;
-
-			return $orderResponse;
+			return new OrderResponse((array) $response);
 		}
 
 		/**
 		 * @param string $orderRef
 		 *
 		 * @return CollectResponse
-		 * @throws \SoapFault
-		 * @throws \Exception
+		 * @throws Exception
 		 */
 		public function collectResponse($orderRef)
 		{
-			$collect = new CollectResponse();
+			$response = $this->post('collect', ['orderRef' => $orderRef]);
 
-			if($this->version === 4)
+			$collect = new CollectResponse((array) $response);
+
+			if(empty($response->status))
 			{
-				$response = $this->client->__soapCall(self::METHOD_COLLECT, ['orderRef' => $orderRef]);
-				$collect->progressStatus = $response->progressStatus;
-				$collect->status = $response->progressStatus;
-
-				if($collect->progressStatus == CollectResponse::PROGRESS_STATUS_COMPLETE)
-				{
-					$collect->userInfo = $response->userInfo;
-					$collect->signature = $response->signature;
-					$collect->ocspResponse = $response->ocspResponse;
-				}
+				throw new Exception('bad response:' . json_encode(['response' => $response, 'orderRef' => $orderRef]));
 			}
-			else
+
+			if($collect->status !== CollectResponse::STATUS_V5_COMPLETED)
 			{
-				$response = $this->post('collect', ['orderRef' => $orderRef]);
-				$collect->status = $response->status;
-
-				if($collect->status == CollectResponse::STATUS_V5_COMPLETED)
-				{
-					$collect->progressStatus = $response->status;
-					$collect->userInfo = $response->completionData->user;
-					$collect->signature = $response->completionData->signature;
-					$collect->ocspResponse = $response->completionData->ocspResponse;
-				}
-				else
-				{
-					$collect->progressStatus = $response->hintCode;
-				}
+				$collect->progressStatus = $response->hintCode;
+				return $collect;
 			}
+
+			$collect->progressStatus = $response->status;
+			$collect->userInfo = $response->completionData->user;
+			$collect->signature = $response->completionData->signature;
+			$collect->ocspResponse = $response->completionData->ocspResponse;
 
 			return $collect;
 		}
@@ -215,15 +115,10 @@
 		 * @param string $orderRef
 		 *
 		 * @return mixed
-		 * @throws \Exception
+		 * @throws Exception
 		 */
 		public function cancelResponse($orderRef)
 		{
-			if($this->version < 5)
-			{
-				throw new \Exception('Cancel Requires v5 of BankID api');
-			}
-
 			return $this->post('cancel', ['orderRef' => $orderRef]);
 		}
 
@@ -232,13 +127,18 @@
 		 * @param $data
 		 *
 		 * @return mixed
-		 * @throws \Exception
+		 * @throws Exception
 		 */
 		private function post($path, $data)
 		{
-			$url = rtrim($this->url, '/') . '/' . $path;
-			$c = curl_init($url);
+			// Option convention table
+			$option_keys = [
+				CURLOPT_CAINFO => 'cafile',
+				CURLOPT_SSLCERT => 'local_cert',
+				CURLOPT_SSLKEY => 'local_pk',
+			];
 
+			// Backwards compatibility
 			if(isset($this->options['stream_context']) AND is_resource($this->options['stream_context']))
 			{
 				$stream_context = stream_context_get_params($this->options['stream_context']);
@@ -247,40 +147,51 @@
 					$this->options += $stream_context['options']['ssl'];
 				}
 			}
-			if(isset($this->options['cafile']))
+
+			// Start curl instance
+			$url = rtrim($this->url, '/') . '/' . $path;
+			$c = curl_init($url);
+
+			// Apply configurable options
+			foreach($option_keys as $curl_key => $option_key)
 			{
-				curl_setopt($c, CURLOPT_CAINFO, $this->options['cafile']);
-			}
-			if(isset($this->options['local_cert']))
-			{
-				curl_setopt($c, CURLOPT_SSLCERT, $this->options['local_cert']);
-			}
-			if(isset($this->options['local_pk']))
-			{
-				curl_setopt($c, CURLOPT_SSLKEY, $this->options['local_pk']);
+				if(isset($this->options[$option_key]))
+				{
+					curl_setopt($c, $curl_key, $this->options[$option_key]);
+				}
 			}
 
+			// Configure other curl settings
 			curl_setopt($c, CURLOPT_POST, 1);
 			curl_setopt($c, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 			curl_setopt($c, CURLOPT_POSTFIELDS, json_encode($data));
 			curl_setopt($c, CURLOPT_RETURNTRANSFER, TRUE);
+
+			// Fetch data
 			$raw_response = curl_exec($c);
 			$error = curl_error($c);
 			curl_close($c);
 
+			// Handle errors
 			if($error)
 			{
-				throw new \Exception('Curl error: ' . $error);
+				throw new Exception('Curl error: ' . $error);
 			}
+
+			// Handle no response error
 			if(!$raw_response)
 			{
-				throw new \Exception('No answer');
+				throw new Exception('No answer');
 			}
+
+			// Decode response
 			$response = json_decode($raw_response);
 			if($response === NULL)
 			{
-				throw new \Exception('Unparsable answer: ' . $raw_response);
+				throw new Exception('Unparsable answer: ' . $raw_response);
 			}
+
+			// Return
 			return $response;
 		}
 	}

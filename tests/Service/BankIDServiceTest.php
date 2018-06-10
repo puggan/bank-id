@@ -2,6 +2,7 @@
 
 	namespace Puggan\BankID\Service;
 
+	use Puggan\BankID\Exception;
 	use Puggan\BankID\Model\CollectResponse;
 	use Puggan\BankID\Model\OrderResponse;
 	use PHPUnit\Framework\TestCase;
@@ -30,7 +31,7 @@
 			$this->ip = file_get_contents('https://bot.whatismyipaddress.com/');
 
 			$this->bankIDService = new BankIDService(
-				'https://test.bankid.puggan.se/rp/v5', $this->ip, [
+				'https://test.bankid.puggan.se/3/rp/v5', $this->ip, [
 					'local_cert' => __DIR__ . '/../bankId.pem',
 				]
 			);
@@ -53,7 +54,7 @@
 		 * @depends testConstructor
 		 *
 		 * @return OrderResponse
-		 * @throws \SoapFault
+		 * @throws Exception
 		 */
 		public function testSignResponse()
 		{
@@ -71,7 +72,7 @@
 		 * @param $signResponse
 		 *
 		 * @return CollectResponse
-		 * @throws \SoapFault
+		 * @throws Exception
 		 */
 		public function testCollectSignResponse($signResponse)
 		{
@@ -79,11 +80,10 @@
 
 			fwrite(STDOUT, "\n");
 
-			$attemps = 0;
+			$attempts = 0;
 
 			do
 			{
-				fwrite(STDOUT, "Waiting 5sec for confirmation (sign) from BankID mobile application...\n");
 				sleep(5);
 				$collectResponse = $this->bankIDService->collectResponse($signResponse->orderRef);
 				if(!$collectResponse instanceof CollectResponse)
@@ -91,9 +91,9 @@
 					$this->assertInstanceOf(CollectResponse::class, $collectResponse);
 					$this->fail('Error collect response');
 				}
-				$attemps++;
+				$attempts++;
 			}
-			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attemps <= 12);
+			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attempts <= 12);
 
 			$this->assertInstanceOf(CollectResponse::class, $collectResponse);
 			$this->assertEquals(CollectResponse::STATUS_V5_COMPLETED, $collectResponse->status);
@@ -107,7 +107,7 @@
 		 * @depends testConstructor
 		 *
 		 * @return OrderResponse
-		 * @throws \SoapFault
+		 * @throws Exception
 		 */
 		public function testAuthResponse()
 		{
@@ -125,7 +125,7 @@
 		 * @param $authResponse
 		 *
 		 * @return CollectResponse
-		 * @throws \SoapFault
+		 * @throws Exception
 		 */
 		public function testAuthSignResponse($authResponse)
 		{
@@ -133,7 +133,7 @@
 
 			fwrite(STDOUT, "\n");
 
-			$attemps = 0;
+			$attempts = 0;
 
 			do
 			{
@@ -145,9 +145,9 @@
 					$this->assertInstanceOf(CollectResponse::class, $collectResponse);
 					$this->fail('Error collect response');
 				}
-				$attemps++;
+				$attempts++;
 			}
-			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attemps <= 12);
+			while($collectResponse->status !== CollectResponse::STATUS_V5_COMPLETED && $attempts <= 12);
 
 			$this->assertInstanceOf(CollectResponse::class, $collectResponse);
 			$this->assertEquals(CollectResponse::STATUS_V5_COMPLETED, $collectResponse->status);

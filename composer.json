@@ -36,7 +36,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Tests\\Puggan\\BankID": "tests"
+      "Tests\\Puggan\\BankID\\": "tests"
     }
   },
   "extra": {

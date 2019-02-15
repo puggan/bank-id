@@ -9,6 +9,7 @@ Library for connect Swedish BankID to your application.
 ## Requirements
 
 * PHP 5.5+ (tested from 5.5 to 7.3-dev)
+    * <PHP 8.0 due to composer dependensies
 * [curl](http://php.net/manual/en/book.curl.php)
 
 ## Install

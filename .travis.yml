@@ -10,7 +10,8 @@ php:
   - 7.1
   - 7.2
   - 7.3
-  - nightly
+# nightly now identifes as php 8.0, and many composer packages are marked to support ^7.0, so they can't be installed
+#  - nightly
 
 sudo: false
 
